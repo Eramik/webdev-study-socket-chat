@@ -13,7 +13,7 @@
             font: 13px Helvetica, Arial;
         }
 
-        form {
+        #socketform {
             background: #000;
             padding: 3px;
             position: fixed;
@@ -21,14 +21,14 @@
             width: 100%;
         }
 
-            form input {
+            #m {
                 border: 0;
                 padding: 10px;
                 width: 90%;
                 margin-right: .5%;
             }
 
-            form button {
+            #socketbutton {
                 width: 9%;
                 background: rgb(130, 224, 255);
                 border: none;
@@ -48,24 +48,84 @@
                 #messages li:nth-child(odd) {
                     background: #eee;
                 }
+        #back {
+            position: absolute;
+            top: 0px;
+            left: 0px;
+            width: 100%;
+            height: 100%;
+            opacity: 0.7;
+            background-color: gray;
+            z-index: 4;
+        }
+        #nickinput {
+            position: absolute;
+            top: 40%;
+            left: 10%;
+            width: 80%;
+            padding: 5px;
+            margin: auto;
+            box-shadow: 0 0 10px 5px rgba(221, 221, 221, 1);
+            z-index: 5;
+            background: white;
+        }
+        #n {
+            height: 100%;
+            width: 90%;
+            margin: auto;
+            padding: 20px;
+            
+        }
+        #set {
+            height: 100%;
+            width: 10%;
+            margin: auto;
+            padding: 20px;
+        }
+
+        #online {
+            -webkit-box-shadow: 0px 0px 14px 3px rgba(28,145,199,1);
+            -moz-box-shadow: 0px 0px 14px 3px rgba(28,145,199,1);
+            box-shadow: 0px 0px 14px 3px rgba(28,145,199,1);
+            position: absolute;
+            top: 25px;
+            right: 25px;
+            padding: 5px;
+        }
     </style>
+    <script src="https://code.jquery.com/jquery-2.2.3.min.js" integrity="sha256-a23g1Nt4dtEYOj7bR+vTu7+T8VP13humZFBJNIYoEJo=" crossorigin="anonymous"></script>
 </head>
 <body>
+    <div id="back"></div>
+    <div id="nickinput">
+        <input id="n" placeholder="Nickname" autocomplete="off" /><button id="set">Set</button>
+    </div>
+    <div id="online">Users online: 0000</div>
     <ul id="messages"></ul>
-    <form action="">
-        <input id="m" autocomplete="off" /><button>Send</button>
+    <form action="" id="socketform">
+        <input id="m" autocomplete="off" placeholder="Message"/><button id="socketbutton">Send</button>
     </form>
     <script src="/socket.io/socket.io.js"></script>
-    <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
     <script>
       var socket = io();
-      $('form').submit(function(){
-        socket.emit('chat message', $('#m').val());
+      $('#socketform').submit(function(){
+          socket.emit('chat message', $('#m').val());
         $('#m').val('');
         return false;
       });
-      socket.on('chat message', function(msg){
-        $('#messages').append($('<li>').text(msg));
+      $('#set').click(function (event) {
+          $('#nickinput').hide('slow');
+          $('#back').hide('slow');
+          socket.emit('usrconnect', $('#n').val());
+      });
+      socket.on('chat message', function(msg, nickname){
+          $('#messages').append($('<li>').text(nickname + ": " + msg));
+      });
+      socket.on('system message', function (systext) {
+          $('#messages').append($('<li>').text(systext));
+      });
+      socket.on('online', function (usersOnline) {
+          $('#online').html("Users online: " + usersOnline);
       });
     </script>
 </body>
