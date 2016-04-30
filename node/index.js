@@ -6,30 +6,34 @@ app.get('/', function (req, res) {
     res.sendfile('index2.html');
 });
 var usersOnline = 0;
-var usersCount = 0;
-var nicknames = new Array();
 
 io.on('connection', function (socket) {
-    var i = usersCount++;
+    var nick = "";
     usersOnline++;
     io.emit('online', usersOnline);
     socket.on('usrconnect', function (nickname) {
-        nicknames.push(nickname);
-        io.emit('system message', "User " + nickname + " connected.");
-        io.emit('online', usersOnline);
+        if (nickname != undefined && nickname != "") {
+            nick = nickname;
+            io.emit('system message', "User " + nickname + " connected.");
+            io.emit('online', usersOnline);
+        }
     });
-    socket.on('disconnect', function (nickname) {
+    socket.on('disconnect', function () {
         usersOnline--;
-        io.emit('system message', "User " + nicknames[i] + " disconnected.")
-        nicknames[i] = "";
         io.emit('online', usersOnline);
+        if (nick != "") {
+            io.emit('system message', "User " + nick + " disconnected.");
+        }
     });
     socket.on('chat message', function (msg) {
-        io.emit('chat message', msg, nicknames[i]);
+        if (msg != undefined && msg != "") {
+            io.emit('chat message', msg, nick);
+            console.log(nick + ": " + msg);
+        }
     });
 
 });
 
-http.listen(3000, function () {
-    console.log('listening on *:3000');
+http.listen(17777, function () {
+    console.log('listening on *:17777');
 });
