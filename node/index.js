@@ -6,24 +6,27 @@ app.get('/', function (req, res) {
     res.sendfile('index2.html');
 });
 var usersOnline = 0;
-var idSeed = 0;
-
+var nicknamesOnline = [];
 io.on('connection', function (socket) {
-    var id = idSeed++;
     var nick = "";
     usersOnline++;
-    io.emit('online', usersOnline);
+    io.emit('online', usersOnline, nicknamesOnline);
     socket.on('usrconnect', function (nickname) {
         if (nickname != undefined && nickname != "") {
             nick = nickname;
+            id = nickname.length;
+            nicknamesOnline.push(nick);
             io.emit('system message', "User " + nickname + " connected.");
             console.log("User " + nickname + " connected.");
-            io.emit('online', usersOnline);
+            io.emit('online', usersOnline, nicknamesOnline);
         }
     });
     socket.on('disconnect', function () {
         usersOnline--;
-        io.emit('online', usersOnline);
+        if (nick != "") {
+            deleteFromArray(nicknamesOnline, nick);
+        }
+        io.emit('online', usersOnline, nicknamesOnline);
         if (nick != "") {
             io.emit('system message', "User " + nick + " disconnected.");
             console.log("User " + nick + " disconnected.");
@@ -41,3 +44,20 @@ io.on('connection', function (socket) {
 http.listen(17777, function () {
     console.log('listening on *:17777');
 });
+
+function find(arr, value) {
+    for (var i = 0; i < arr.length; i++) {
+        if (arr[i] == value) {
+            return i;
+        }
+    }
+    return null;
+}
+
+function deleteFromArray(arr, value) {
+    for (var i = find(arr, value); i < arr.length - 2; i++) {
+        arr[i] = arr[i + 1];
+    }
+    delete arr[i];
+    arr.length--;
+}

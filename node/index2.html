@@ -135,6 +135,7 @@
         $('#socketform').submit(function(){
             socket.emit('chat message', $('#m').val());
             $('#m').val('');
+            $('#m').focus();
             return false;
         });
 
@@ -157,8 +158,13 @@
             $('#messages').append($('<li>').text(systext));
         });
 
-        socket.on('online', function (usersOnline) {
-            $('#online').html("Users online: " + usersOnline);
+        socket.on('online', function (usersOnline, nicknamesOnline) {
+            var nickList = '';
+            for (var i = 0; i < nicknamesOnline.length; i++) {
+                nickList += nicknamesOnline[i];
+                nickList += "<br>";
+            }
+            $('#online').html("Users online: " + usersOnline + "<br>" + nickList);
         });
     </script>
 </body>
