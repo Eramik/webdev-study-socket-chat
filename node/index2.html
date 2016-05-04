@@ -19,7 +19,7 @@
             padding: 3px;
             position: fixed;
             bottom: 0;
-            height: 5%;
+            height: 45px;
             width: 100%;
         }
 
@@ -45,7 +45,6 @@
             padding: 0;
             position: absolute;
             width: 100%;
-            height: 95%;
             overflow-y: scroll;
         }
 
@@ -125,30 +124,42 @@
     </div>
     <script src="/socket.io/socket.io.js"></script>
     <script>
-      var socket = io();
-      $('#socketform').submit(function(){
-          socket.emit('chat message', $('#m').val());
-          $('#m').val('');
-          return false;
-      });
-      $('#nickform').submit(function () {
-          if ($('#n').val() != "") {
-              $('#nickinput').hide('slow');
-              $('#back').hide('slow');
-              socket.emit('usrconnect', $('#n').val());
-          }
-          return false;
-      });
-      socket.on('chat message', function(msg, nickname){
-          $('#messages').append($('<li>').text(nickname + ": " + msg));
-          document.getElementById('messages').scrollTop = 9999;
-      });
-      socket.on('system message', function (systext) {
-          $('#messages').append($('<li>').text(systext));
-      });
-      socket.on('online', function (usersOnline) {
-          $('#online').html("Users online: " + usersOnline);
-      });
+        var socket = io();
+
+        $(document).ready(function () {
+            $('#n').focus();
+            $("#messages").css("height", $("#socketform").offset().top + "px");
+
+        });
+
+        $('#socketform').submit(function(){
+            socket.emit('chat message', $('#m').val());
+            $('#m').val('');
+            return false;
+        });
+
+        $('#nickform').submit(function () {
+            if ($('#n').val() != "") {
+                $('#nickinput').hide('slow');
+                $('#back').hide('slow');
+                socket.emit('usrconnect', $('#n').val());
+                $('#m').focus();
+            }
+            return false;
+        });
+
+        socket.on('chat message', function(msg, nickname){
+            $('#messages').append($('<li>').text(nickname + ": " + msg));
+            document.getElementById('messages').scrollTop = 9999;
+        });
+
+        socket.on('system message', function (systext) {
+            $('#messages').append($('<li>').text(systext));
+        });
+
+        socket.on('online', function (usersOnline) {
+            $('#online').html("Users online: " + usersOnline);
+        });
     </script>
 </body>
 </html>

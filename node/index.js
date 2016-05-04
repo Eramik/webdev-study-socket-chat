@@ -6,8 +6,10 @@ app.get('/', function (req, res) {
     res.sendfile('index2.html');
 });
 var usersOnline = 0;
+var idSeed = 0;
 
 io.on('connection', function (socket) {
+    var id = idSeed++;
     var nick = "";
     usersOnline++;
     io.emit('online', usersOnline);
@@ -15,6 +17,7 @@ io.on('connection', function (socket) {
         if (nickname != undefined && nickname != "") {
             nick = nickname;
             io.emit('system message', "User " + nickname + " connected.");
+            console.log("User " + nickname + " connected.");
             io.emit('online', usersOnline);
         }
     });
@@ -23,6 +26,7 @@ io.on('connection', function (socket) {
         io.emit('online', usersOnline);
         if (nick != "") {
             io.emit('system message', "User " + nick + " disconnected.");
+            console.log("User " + nick + " disconnected.");
         }
     });
     socket.on('chat message', function (msg) {
