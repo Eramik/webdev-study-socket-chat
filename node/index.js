@@ -7,6 +7,7 @@ app.get('/', function (req, res) {
 });
 var usersOnline = 0;
 var nicknamesOnline = [];
+var connectId = {}
 io.on('connection', function (socket) {
     var nick = "";
     usersOnline++;
@@ -19,6 +20,7 @@ io.on('connection', function (socket) {
             io.emit('system message', "User " + nickname + " connected.");
             console.log("User " + nickname + " connected.");
             io.emit('online', usersOnline, nicknamesOnline);
+            connectId[nick] = socket.id;
         }
     });
     socket.on('disconnect', function () {
@@ -30,7 +32,9 @@ io.on('connection', function (socket) {
         if (nick != "") {
             io.emit('system message', "User " + nick + " disconnected.");
             console.log("User " + nick + " disconnected.");
+            delete connectId[nick];
         }
+        
     });
     socket.on('chat message', function (msg) {
         if (msg != undefined && msg != "") {
@@ -38,9 +42,17 @@ io.on('connection', function (socket) {
             console.log(nick + ": " + msg);
         }
     });
+    socket.on('private message', function (to, msg) {
+        if (connectId[to] == undefined) {
+            return;
+        }
+        socket.broadcast.to(connectId[to]).emit('private message', nick, msg);
+        socket.emit('private message', nick, msg);
+        console.log("private message from " + nick + " to " + to);
+    });
+
     socket.on("userIsTyping", function (nick) {
         socket.broadcast.emit("userIsTyping", nick);
-        //socket.emit("userIsTyping", nick); // for debug
     });
 
 });

@@ -26,7 +26,7 @@
         #m {
             border: 1px solid gray;
             padding: 10px;
-            width: 90%;
+            width: 89%;
             margin-right: .5%;
             height: 100%;
         }
@@ -143,7 +143,8 @@
         <ul id="messages"></ul>
         <ul id="typingnow"></ul>
         <form action="" id="socketform">
-            <input id="m" autocomplete="off" placeholder="Message" onkeydown="userIsTyping()"/><button id="socketbutton">Send</button>
+            <input id="m" autocomplete="off" placeholder='Type your message here. Use "private to {nickname}:" to send private message. ' onkeydown="userIsTyping()"/>
+            <button id="socketbutton">Send</button>
         </form>
     </div>
     <script src="/socket.io/socket.io.js"></script>
@@ -156,10 +157,21 @@
             $("#typingnow").css("top", $("#socketform").offset().top + "px");
         });
 
-        $('#socketform').submit(function(){
-            socket.emit('chat message', $('#m').val());
-            $('#messages').append($('<li>').text($("#n").val() + ": " + $('#m').val()));
-            document.getElementById('messages').scrollTop = 9999;
+        $('#socketform').submit(function () {
+            if ($('#m').val() != "" && $('#m').val() != undefined) {
+                if ($('#m').val().search("private to ") == 0) {
+                    var to = (getNickname($('#m').val()));
+                    if (to != "null") {
+                        socket.emit('private message', to, $('#m').val());
+                        $('#m').val('');
+                        $('#m').focus();
+                        return false;
+                    }
+                }
+                socket.emit('chat message', $('#m').val());
+                $('#messages').append($('<li>').text($("#n").val() + ": " + $('#m').val()));
+                document.getElementById('messages').scrollTop = 9999;
+            }
             $('#m').val('');
             $('#m').focus();
             return false;
@@ -174,7 +186,7 @@
             }
             return false;
         });
-
+        
         socket.on('chat message', function(msg, nickname){
             $('#messages').append($('<li>').text(nickname + ": " + msg));
             document.getElementById('messages').scrollTop = 9999;
@@ -192,6 +204,7 @@
             }
             $('#online').html("Users online: " + usersOnline + "<br>" + nickList);
         });
+
         socket.on("userIsTyping", function (nickname) {
             var id = "typ" + nickname;
             id = id.replace(" ", "");
@@ -213,6 +226,15 @@
             document.getElementById('messages').scrollTop = 9999;
             document.getElementById('typingnow').scrollTop = 9999;
             typingTimers[id] = setTimeout("deleteFromList( " + id + " );", 2000);
+        });
+
+        socket.on('private message', function (nickname, msg) {
+            var li = $('<li>').text(nickname + " " + msg);
+            li.css("color", "#660066");
+            li.css("background-color", "#ffe6ff");
+            $(li).html("<b>" + $(li).html() + "</b>");
+            $('#messages').append(li);
+            document.getElementById('messages').scrollTop = 9999;
         });
 
         function userIsTyping() {
@@ -247,6 +269,21 @@
             }
             delete arr[i];
             arr.length--;
+        }
+
+        function getNickname(str) {
+            var str2 = "";
+            for(var i = 11; i < str.length; i++){
+                if (str[i] == ":") {
+                    if (str2 == "")
+                        return null;
+                    else
+                        return str2;
+                } else {
+                    str2 += str[i];
+                }
+            }
+            return null;
         }
     </script>
 </body>
