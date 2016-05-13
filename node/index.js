@@ -34,9 +34,13 @@ io.on('connection', function (socket) {
     });
     socket.on('chat message', function (msg) {
         if (msg != undefined && msg != "") {
-            io.emit('chat message', msg, nick);
+            socket.broadcast.emit('chat message', msg, nick);
             console.log(nick + ": " + msg);
         }
+    });
+    socket.on("userIsTyping", function (nick) {
+        socket.broadcast.emit("userIsTyping", nick);
+        //socket.emit("userIsTyping", nick); // for debug
     });
 
 });
@@ -45,7 +49,7 @@ http.listen(17777, function () {
     console.log('listening on *:17777');
 });
 
-function find(arr, value) {
+function findInArray(arr, value) {
     for (var i = 0; i < arr.length; i++) {
         if (arr[i] == value) {
             return i;
@@ -55,7 +59,7 @@ function find(arr, value) {
 }
 
 function deleteFromArray(arr, value) {
-    for (var i = find(arr, value); i < arr.length - 2; i++) {
+    for (var i = findInArray(arr, value); i < arr.length - 2; i++) {
         arr[i] = arr[i + 1];
     }
     delete arr[i];

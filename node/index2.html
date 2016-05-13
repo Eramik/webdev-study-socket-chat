@@ -35,7 +35,8 @@
             width: 9%;
             background-color: lightblue;
             border: 1px solid gray;
-            padding: 10px;
+            padding-top: 10px;
+            padding-bottom: 10px;
             height: 100%;
         }
 
@@ -90,7 +91,9 @@
             height: 100%;
             width: 10%;
             margin: auto;
-            padding: 20px;
+            padding: 1px;
+            padding-top: 20px;
+            padding-bottom: 20px;
         }
 
         #online {
@@ -104,9 +107,29 @@
             background-color: white;
             z-index: 2;
         }
+
+        #typingnow {
+            list-style-type: none;
+            margin: auto;
+            padding: 1px;
+            position: absolute;
+            width: 100%;
+            height: 0px;
+        }
+
+        #typingnow li {
+            background-color: #ffffcc;
+            color: #595959;
+            width: 100%;
+            padding: 3px;
+            padding-left: 5px;
+            padding-right: 5px;
+            overflow-y: hidden;
+        }
     </style>
 
-    <script src="https://code.jquery.com/jquery-2.2.3.min.js" integrity="sha256-a23g1Nt4dtEYOj7bR+vTu7+T8VP13humZFBJNIYoEJo=" crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-2.2.3.min.js" integrity="sha256-a23g1Nt4dtEYOj7bR+vTu7+T8VP13humZFBJNIYoEJo="
+             crossorigin="anonymous"></script>
 </head>
 <body>
     <div id="back"></div>
@@ -115,25 +138,28 @@
             <input id="n" placeholder="Nickname" autocomplete="off" /><button id="set">Set</button>
         </form>
     </div>
-    <div id="online">Users online: OFFLINE</div>
+    <div id="online">Users online: NO CONNECTION</div>
     <div>
         <ul id="messages"></ul>
+        <ul id="typingnow"></ul>
         <form action="" id="socketform">
-            <input id="m" autocomplete="off" placeholder="Message" /><button id="socketbutton">Send</button>
+            <input id="m" autocomplete="off" placeholder="Message" onkeydown="userIsTyping()"/><button id="socketbutton">Send</button>
         </form>
     </div>
     <script src="/socket.io/socket.io.js"></script>
     <script>
         var socket = io();
-
+        var typingTimers = {};
         $(document).ready(function () {
             $('#n').focus();
             $("#messages").css("height", $("#socketform").offset().top + "px");
-
+            $("#typingnow").css("top", $("#socketform").offset().top + "px");
         });
 
         $('#socketform').submit(function(){
             socket.emit('chat message', $('#m').val());
+            $('#messages').append($('<li>').text($("#n").val() + ": " + $('#m').val()));
+            document.getElementById('messages').scrollTop = 9999;
             $('#m').val('');
             $('#m').focus();
             return false;
@@ -166,6 +192,62 @@
             }
             $('#online').html("Users online: " + usersOnline + "<br>" + nickList);
         });
+        socket.on("userIsTyping", function (nickname) {
+            var id = "typ" + nickname;
+            id = id.replace(" ", "");
+            if (typingTimers[id] != undefined) {
+                clearTimeout(typingTimers[id]);
+                typingTimers[id] = setTimeout("deleteFromList( " + id + " );", 2000);
+                return;
+            }
+            var typingMessage = document.createElement('li');
+            typingMessage.id = id;
+            typingMessage.innerText = nickname + " is typing now...";
+            $('#typingnow').append(typingMessage);
+            // setting up the css properties
+            // 21px - height of <li>
+            $('#typingnow').css("height", (parseInt($('#typingnow').css("height")) + 21) + "px"); // height += 21
+            $('#typingnow').css("top", (parseInt($('#typingnow').css("top")) - 21) + "px"); // top -= 21
+            $('#messages').css("height", (parseInt($('#messages').css("height")) - 21) + "px"); // height -= 21
+            //scroll down all
+            document.getElementById('messages').scrollTop = 9999;
+            document.getElementById('typingnow').scrollTop = 9999;
+            typingTimers[id] = setTimeout("deleteFromList( " + id + " );", 2000);
+        });
+
+        function userIsTyping() {
+            socket.emit("userIsTyping", $("#n").val());
+        };
+       
+        function deleteFromList(li) {
+            $("#" + li.id).remove();
+            // setting up the css properties
+            // 21px - height of <li>
+            $('#typingnow').css("height", (parseInt($('#typingnow').css("height")) - 21) + "px"); // height -= 21
+            $('#typingnow').css("top", (parseInt($('#typingnow').css("top")) + 21) + "px"); // top += 21
+            $('#messages').css("height", (parseInt($('#messages').css("height")) + 21) + "px"); // height += 21
+            //scroll down all
+            document.getElementById('messages').scrollTop = 9999;
+            document.getElementById('typingnow').scrollTop = 9999;
+            delete typingTimers[li.id];
+        }
+
+        function findInArray(arr, value) {
+            for (var i = 0; i < arr.length; i++) {
+                if (arr[i] == value) {
+                    return i;
+                }
+            }
+            return null;
+        }
+
+        function deleteFromArray(arr, value) {
+            for (var i = find(arr, value); i < arr.length - 2; i++) {
+                arr[i] = arr[i + 1];
+            }
+            delete arr[i];
+            arr.length--;
+        }
     </script>
 </body>
 </html>
